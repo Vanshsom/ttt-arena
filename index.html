@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="TTT Arena — Experience Tic-Tac-Toe reimagined as a high-fidelity digital battlefield. Kinetic AI, global ranks, and real-time online play." />
+  <title>TTT Arena — Transcend The Grid</title>
+
+  <!-- Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Sora:wght@300;400;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>74
+<body>
+
+  <!-- ── Ambient particle canvas (always behind everything) -->
+  <canvas id="particles-canvas" aria-hidden="true"></canvas>
+
+  <!-- ── Mouse cursor glow tracker -->
+  <div id="cursor-glow" aria-hidden="true"></div>
+
+  <!-- ── Aurora gradient layers -->
+  <div class="aurora" aria-hidden="true">
+    <div class="aurora-layer aurora-1"></div>
+    <div class="aurora-layer aurora-2"></div>
+    <div class="aurora-layer aurora-3"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       LOADER
+  ════════════════════════════════════════════════ -->
+  <div id="loader" aria-label="Loading TTT Arena" role="status">
+    <div class="loader-inner">
+      <div class="loader-brand">
+        <span class="lb-ttt">TTT</span><span class="lb-arena">ARENA</span>
+      </div>
+      <div class="loader-grid" aria-hidden="true">
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+      </div>
+      <div class="loader-bar-track">
+        <div class="loader-bar-fill" id="loader-bar"></div>
+        <div class="loader-bar-shimmer"></div>
+      </div>
+      <div class="loader-status" id="loader-status">INITIALIZING SYSTEMS…</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       SPLASH — TACTICAL DISCLAIMER
+  ════════════════════════════════════════════════ -->
+  <div id="splash" role="dialog" aria-modal="true" aria-labelledby="splash-title" style="display:none">
+    <div class="splash-card">
+      <div class="splash-icon-ring">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <h2 id="splash-title" class="splash-title">TACTICAL DISCLAIMER</h2>
+      <div class="splash-rule"></div>
+      <p class="splash-body">
+        This interface is a high-fidelity digital arena. Every move is a tactical decision accompanied by visual feedback and an immersive interface.
+        <strong>Proceed with tactical awareness.</strong>
+      </p>
+      <button class="btn-splash" id="btn-acknowledge">
+        ACKNOWLEDGE &amp; ENTER
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </button>
+      <div class="splash-footer">SYSTEM: STABLE &nbsp;·&nbsp; VER: 2.0-BETA</div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════
+       LANDING PAGE
+  ════════════════════════════════════════════════ -->
+  <div id="landing">
+
+    <!-- NAV -->
+    <nav class="nav-landing" id="nav-landing">
+      <div class="nav-logo-mark">TTT <span>ARENA</span></div>
+      <div class="nav-center-links">
+        <a href="#features" class="nav-lnk">Features</a>
+        <a href="#preview" class="nav-lnk">Preview</a>
+        <a href="#pricing" class="nav-lnk">Pricing</a>
+      </div>
+      <button class="btn-pill magnetic" id="btn-enter-arena">ENTER ARENA</button>
+    </nav>
+
+    <!-- ── HERO ── -->
+    <section id="hero" class="section-hero">
+
+      <!-- Floating giant symbols -->
+      <div class="hero-sym hero-x-sym" aria-hidden="true">X</div>
+      <div class="hero-sym hero-o-sym" aria-hidden="true">O</div>
+
+      <div class="hero-body reveal">
+        <div class="hero-badge">
+          <span class="live-dot"></span>
+          SEASON 04 &nbsp;·&nbsp; BATTLE PASS ACTIVE
+        </div>
+
+        <h1 class="hero-title">
+          TRANSCEND<br/>
+          <span class="grad-text">THE GRID</span>
+        </h1>
+
+        <p class="hero-sub">
+          Experience Tic-Tac-Toe reimagined as a high-fidelity digital battlefield.
+          Kinetic visuals, tactical AI, and global supremacy await.
+        </p>
+
+        <div class="hero-cta-row">
+          <button class="btn-primary magnetic" id="btn-hero-local">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            LOCAL PVP
+          </button>
+          <button class="btn-ghost magnetic" id="btn-hero-ai">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            PLAY vs AI
+          </button>
+          <button class="btn-secondary magnetic" id="btn-hero-online">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            PLAY WITH FRIEND
+          </button>
+        </div>
+
+        <div class="hero-stats">
+          <div class="hstat">
+            <span class="hstat-val">4.8M+</span>
+            <span class="hstat-lbl">MATCHES</span>
+          </div>
+          <span class="hstat-sep"></span>
+          <div class="hstat">
+            <span class="hstat-val">12MS</span>
+            <span class="hstat-lbl">LATENCY</span>
+          </div>
+          <span class="hstat-sep"></span>
+          <div class="hstat">
+            <span class="hstat-val">99.9%</span>
+            <span class="hstat-lbl">UPTIME</span>
+          </div>
+          <span class="hstat-sep"></span>
+          <div class="hstat">
+            <span class="hstat-val">3</span>
+            <span class="hstat-lbl">GAME MODES</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FEATURES BENTO ── -->
+    <section id="features" class="section-features">
+      <div class="section-header reveal">
+        <div class="section-chip">PROTOCOL ENHANCEMENTS</div>
+      </div>
+
+      <div class="bento-grid">
+
+        <!-- Kinetic Markers (large) -->
+        <div class="bcard bcard-large reveal" style="--d:.08s">
+          <div class="bcard-chip">VISUAL FIDELITY</div>
+          <h3 class="bcard-title">Kinetic Markers</h3>
+          <p class="bcard-body">Our custom glyphs are more than placeholders. Fluid animations and haptic energy ripple across the grid with each strategic placement.</p>
+          <div class="bcard-visual" aria-hidden="true">
+            <div class="kd-x">X</div>
+            <div class="kd-o">O</div>
+            <div class="kd-grid">
+              <span></span><span></span><span></span>
+              <span></span><span class="kd-active"></span><span></span>
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Global Ranks (tall) -->
+        <div class="bcard bcard-tall reveal" style="--d:.16s">
+          <div class="bcard-chip">RANKED SYSTEM</div>
+          <h3 class="bcard-title">Global Ranks</h3>
+          <p class="bcard-body">Track the leaderboard and see your mark rise to the top.</p>
+          <div class="bcard-visual rank-visual" aria-hidden="true">
+            <div class="rv-row"><span class="rv-medal">🥇</span><span class="rv-name">NEON_RAZOR</span><span class="rv-pts">2,840</span></div>
+            <div class="rv-row"><span class="rv-medal">🥈</span><span class="rv-name">ARENA AI</span><span class="rv-pts">2,710</span></div>
+            <div class="rv-row rv-you"><span class="rv-medal">🥉</span><span class="rv-name">YOU</span><span class="rv-pts">1,980</span></div>
+          </div>
+        </div>
+
+        <!-- Neural AI (wide) -->
+        <div class="bcard bcard-wide reveal" style="--d:.24s">
+          <div class="bcard-chip">AI ENGINE</div>
+          <h3 class="bcard-title">Neural Link AI</h3>
+          <p class="bcard-body">Challenge an AI powered by perfect Minimax with alpha-beta pruning. Three difficulty tiers for every type of player.</p>
+          <div class="bcard-visual ai-visual" aria-hidden="true">
+            <div class="ai-tier at-easy">
+              <span class="at-dot"></span>EASY
+              <div class="at-bar"><div style="width:22%"></div></div>
+            </div>
+            <div class="ai-tier at-med">
+              <span class="at-dot"></span>MEDIUM
+              <div class="at-bar"><div style="width:62%"></div></div>
+            </div>
+            <div class="ai-tier at-hard">
+              <span class="at-dot"></span>HARD
+              <div class="at-bar"><div style="width:100%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Battle Modes -->
+        <div class="bcard bcard-med reveal" style="--d:.32s">
+          <div class="bcard-chip">BATTLE MODES</div>
+          <h3 class="bcard-title">Immersive Arenas</h3>
+          <p class="bcard-body">Three distinct arenas — Local, AI Duel, and Online Friend Code.</p>
+          <div class="bcard-visual env-visual" aria-hidden="true">
+            <span class="ev-badge">LOCAL PVP</span>
+            <span class="ev-badge ev-ai">vs AI</span>
+            <span class="ev-badge ev-online">ONLINE</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── DASHBOARD PREVIEW ── -->
+    <section id="preview" class="section-preview">
+      <div class="preview-text reveal">
+        <div class="section-chip">LIVE PREVIEW</div>
+        <h2 class="section-title italic-h"><em>REDEFINING THE</em><br/><span class="grad-text">CLASSIC LOOP</span></h2>
+        <p class="preview-desc">It's more than just marks on a grid. Every move is a tactical decision with immersive feedback that pulls you into the digital void.</p>
+        <ul class="preview-list">
+          <li><span class="pl-dot pl-green"></span><strong>Pixel-Perfect Collision</strong> — Smooth feedback for every touch or click.</li>
+          <li><span class="pl-dot pl-cyan"></span><strong>Dynamic Data</strong> — Personalize your arena with real-time context.</li>
+          <li><span class="pl-dot pl-purple"></span><strong>Instant Sync</strong> — Play across devices with zero-latency persistence.</li>
+        </ul>
+      </div>
+
+      <div class="preview-mockup reveal" style="--d:.2s">
+        <div class="mockup-window">
+          <div class="mockup-titlebar">
+            <span class="mw-dot mw-red"></span>
+            <span class="mw-dot mw-yellow"></span>
+            <span class="mw-dot mw-green"></span>
+            <span class="mw-url">ttt-arena.io/match/LIVE</span>
+          </div>
+          <div class="mockup-content">
+            <div class="mw-players">
+              <div class="mw-player mw-px">
+                <span class="mw-sym mw-sx">X</span>
+                <div><div class="mw-pname">PLAYER 1</div><div class="mw-score">08</div></div>
+              </div>
+              <div class="mw-center">
+                <div class="mw-round">ROUND 03</div>
+                <div class="mw-vs">VERSUS</div>
+              </div>
+              <div class="mw-player mw-po">
+                <div><div class="mw-pname mw-right">ARENA AI</div><div class="mw-score mw-right mw-score-o">05</div></div>
+                <span class="mw-sym mw-so">O</span>
+              </div>
+            </div>
+            <div class="mw-board" aria-hidden="true" id="mini-board">
+              <div class="mw-cell mw-cx">X</div>
+              <div class="mw-cell mw-co">O</div>
+              <div class="mw-cell"></div>
+              <div class="mw-cell"></div>
+              <div class="mw-cell mw-cx mw-active">X</div>
+              <div class="mw-cell mw-co">O</div>
+              <div class="mw-cell"></div>
+              <div class="mw-cell"></div>
+              <div class="mw-cell mw-cx">X</div>
+            </div>
+            <div class="mw-log">
+              <div class="mw-log-line">&gt; PLAYER_1 DEPLOYED [X] AT CELL_C2</div>
+              <div class="mw-log-line">&gt; AI CALCULATING RESPONSE…</div>
+              <div class="mw-log-line mw-log-active">&gt; CURRENT TURN: PLAYER_1 (WAITING…)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TESTIMONIALS ── -->
+    <section id="testimonials" class="section-testimonials">
+      <div class="section-header reveal">
+        <div class="section-chip">TACTICAL REPORTS</div>
+        <h2 class="section-title">From The <span class="grad-text">Frontlines</span></h2>
+      </div>
+
+      <div class="testi-grid">
+
+        <div class="tcard reveal" style="--d:.08s">
+          <div class="tcard-header">
+            <div class="tcard-avatar ta-1">NR</div>
+            <div class="tcard-info">
+              <div class="tcard-name">Neon Razor</div>
+              <div class="tcard-handle">@neon_razor</div>
+            </div>
+            <div class="tcard-stars">★★★★★</div>
+          </div>
+          <p class="tcard-body">"The Hard AI is genuinely unbeatable. I lost 47 consecutive matches before admitting defeat. This is elite-level game design executed flawlessly."</p>
+          <div class="tcard-badge">VERIFIED OPERATOR</div>
+        </div>
+
+        <div class="tcard reveal" style="--d:.18s">
+          <div class="tcard-header">
+            <div class="tcard-avatar ta-2">CP</div>
+            <div class="tcard-info">
+              <div class="tcard-name">Core Pulse</div>
+              <div class="tcard-handle">@core_pulse</div>
+            </div>
+            <div class="tcard-stars">★★★★★</div>
+          </div>
+          <p class="tcard-body">"Online friend mode is buttery smooth. Room code created, friend joined from across the country in under 3 seconds. Real-time sync is flawless."</p>
+          <div class="tcard-badge">GLOBAL OPERATIVE</div>
+        </div>
+
+        <div class="tcard reveal" style="--d:.28s">
+          <div class="tcard-header">
+            <div class="tcard-avatar ta-3">VD</div>
+            <div class="tcard-info">
+              <div class="tcard-name">Voxel Drift</div>
+              <div class="tcard-handle">@voxel_drift</div>
+            </div>
+            <div class="tcard-stars">★★★★★</div>
+          </div>
+          <p class="tcard-body">"The deadlock detection caught a stalemate I didn't even see coming. This is what Tic-Tac-Toe should have always been. Utterly stunning."</p>
+          <div class="tcard-badge">TACTICAL ANALYST</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── PRICING ── -->
+    <section id="pricing" class="section-pricing">
+      <div class="section-header reveal">
+        <div class="section-chip">CHOOSE YOUR PROTOCOL</div>
+        <h2 class="section-title">Select Your <span class="grad-text">Rank</span></h2>
+      </div>
+
+      <div class="price-grid">
+
+        <div class="pcard reveal" style="--d:.08s">
+          <div class="pcard-tier">RECRUIT</div>
+          <div class="pcard-price">FREE</div>
+          <div class="pcard-period">Always &amp; Forever</div>
+          <ul class="pcard-list">
+            <li class="pl-on">Local PvP — Unlimited</li>
+            <li class="pl-on">3 AI Difficulty Modes</li>
+            <li class="pl-on">Match History (50 Games)</li>
+            <li class="pl-on">Leaderboard Access</li>
+            <li class="pl-off">Online Friend Mode</li>
+            <li class="pl-off">Private Room Codes</li>
+          </ul>
+          <button class="btn-ghost pcard-btn" id="btn-price-recruit">DEPLOY NOW</button>
+        </div>
+
+        <div class="pcard pcard-featured reveal" style="--d:.18s">
+          <div class="pcard-popular">MOST POPULAR</div>
+          <div class="pcard-tier">OPERATOR</div>
+          <div class="pcard-price">FREE</div>
+          <div class="pcard-period">With Firebase Setup</div>
+          <ul class="pcard-list">
+            <li class="pl-on">Everything in Recruit</li>
+            <li class="pl-on">Online Friend Mode</li>
+            <li class="pl-on">Private Room Codes</li>
+            <li class="pl-on">Real-time Sync</li>
+            <li class="pl-on">Cross-device Play</li>
+            <li class="pl-on">Persistent Match Data</li>
+          </ul>
+          <button class="btn-primary pcard-btn" id="btn-price-operator">ENTER ARENA</button>
+        </div>
+
+        <div class="pcard pcard-sovereign reveal" style="--d:.28s">
+          <div class="pcard-tier">SOVEREIGN</div>
+          <div class="pcard-price">SOON</div>
+          <div class="pcard-period">In Development</div>
+          <ul class="pcard-list">
+            <li class="pl-on">Everything in Operator</li>
+            <li class="pl-on">Global Matchmaking</li>
+            <li class="pl-on">Seasonal Tournaments</li>
+            <li class="pl-on">Custom Themes</li>
+            <li class="pl-on">Profile Customization</li>
+            <li class="pl-on">Exclusive Achievements</li>
+          </ul>
+          <button class="btn-ghost pcard-btn" disabled>COMING SOON</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── CTA ── -->
+    <section id="cta-zone" class="section-cta">
+      <div class="cta-inner reveal">
+        <h2 class="cta-title">READY TO<br/><span class="grad-text">PULSE?</span></h2>
+        <div class="cta-btns">
+          <button class="btn-primary btn-xl magnetic" id="btn-cta-enter">ENTER ARENA</button>
+          <button class="btn-ghost btn-xl magnetic" id="btn-cta-reviews" onclick="document.getElementById('testimonials').scrollIntoView({behavior:'smooth'})">VIEW REVIEWS</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FOOTER ── -->
+    <footer class="landing-footer">
+      <div class="lf-top">
+        <div class="lf-brand">
+          <div class="lf-logo">TTT <span>ARENA</span></div>
+          <p class="lf-tagline">The future of Tic-Tac-Toe is here.<br/>Tactical. Immersive. Unstoppable.</p>
+        </div>
+        <div class="lf-col">
+          <h4>GAME</h4>
+          <a href="#">Local PvP</a>
+          <a href="#">vs AI</a>
+          <a href="#">Online Friend</a>
+          <a href="#">Leaderboard</a>
+        </div>
+        <div class="lf-col">
+          <h4>SYSTEM</h4>
+          <a href="#">Match History</a>
+          <a href="#">Statistics</a>
+          <a href="#">Firebase Setup</a>
+          <a href="#">Documentation</a>
+        </div>
+        <div class="lf-col">
+          <h4>ARENA</h4>
+          <a href="#">Features</a>
+          <a href="#">Roadmap</a>
+          <a href="#">Changelog</a>
+          <a href="#">Contact</a>
+        </div>
+      </div>
+      <div class="lf-bottom">
+        <span>© 2026 TTT ARENA &nbsp;·&nbsp; SYSTEM STATUS: OPTIMAL</span>
+        <div class="lf-metrics">
+          <span>LATENCY: 14MS</span>
+          <span class="lf-sep">·</span>
+          <span>FRAME: 144HZ</span>
+        </div>
+      </div>
+    </footer>
+
+  </div><!-- /#landing -->
+
+  <!-- ════════════════════════════════════════════════
+       GAME APP
+  ════════════════════════════════════════════════ -->
+  <div id="app">
+
+    <!-- GAME NAV -->
+    <nav class="nav-game" id="nav-game">
+      <button class="gnav-back" id="nav-back" aria-label="Back">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        BACK
+      </button>
+      <div class="nav-logo-mark">TTT <span>ARENA</span></div>
+      <div class="gnav-tabs">
+        <button class="gtab" id="tab-arena">ARENA</button>
+        <button class="gtab" id="btn-game-leaderboard">LEADERBOARD</button>
+        <button class="gtab" id="btn-game-history">HISTORY</button>
+        <button class="gtab" id="tab-friends" style="display:none">FRIENDS</button>
+      </div>
+      <div class="notif-bell-wrap">
+        <button class="notif-bell-btn" id="btn-notif-bell" aria-label="Notifications" title="Notifications" style="display:none">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge" id="notif-badge" style="display:none">0</span>
+        </button>
+      </div>
+      <button class="btn-pill" id="btn-start-match">START MATCH</button>
+    </nav>
+
+    <!-- Hidden game-tagline (legacy DOM ref compatibility) -->
+    <span id="game-tagline" style="display:none" aria-hidden="true"></span>
+
+    <!-- ── SCREEN: MODE HOME ── -->
+    <div class="screen" id="screen-home">
+      <div class="gscreen-wrap">
+        <div class="gscreen-head">
+          <div class="gscreen-chip">SELECT PROTOCOL</div>
+          <h2 class="gscreen-title">Choose <span class="grad-text">Battle Mode</span></h2>
+        </div>
+        <!-- Player ID Pill (shown when logged in) -->
+        <div class="player-id-pill" id="player-id-pill" style="display:none" aria-label="Your player profile"></div>
+        <!-- Login CTA (shown when logged out) -->
+        <button class="btn-login-home" id="btn-login-home-aux" style="display:none">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          LOGIN TO PLAY ONLINE
+        </button>
+        <div class="mode-cards">
+          <button class="mcard" id="btn-mode-local">
+            <div class="mcard-icon mcard-icon-local">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="mcard-text-group">
+              <div class="mcard-label">LOCAL PVP</div>
+              <div class="mcard-desc">Same device · Two players · No account needed</div>
+            </div>
+          </button>
+          <button class="mcard" id="btn-mode-ai">
+            <div class="mcard-icon mcard-icon-ai">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <div class="mcard-text-group">
+              <div class="mcard-label">vs AI</div>
+              <div class="mcard-desc">Easy · Medium · Hard Minimax Engine</div>
+            </div>
+          </button>
+          <button class="mcard" id="btn-mode-online">
+            <div class="mcard-icon mcard-icon-online">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <div class="mcard-text-group">
+              <div class="mcard-label">ONLINE FRIEND</div>
+              <div class="mcard-desc">Room code · Private match · Login required</div>
+            </div>
+          </button>
+        </div>
+        <div class="mode-aux">
+          <button class="aux-link" id="btn-goto-leaderboard">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Leaderboard
+          </button>
+          <button class="aux-link" id="btn-goto-history">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Match History
+          </button>
+          <button class="aux-link" id="btn-goto-friends" style="display:none">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Friends
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN: AI DIFFICULTY ── -->
+    <div class="screen" id="screen-ai-select">
+      <div class="gscreen-wrap">
+        <div class="gscreen-head">
+          <div class="gscreen-chip">NEURAL LINK CONFIG</div>
+          <h2 class="gscreen-title">Select <span class="grad-text">Difficulty</span></h2>
+        </div>
+        <div class="diff-cards">
+          <button class="dcard dcard-easy" id="btn-diff-easy">
+            <div class="dcard-header">
+              <span class="dcard-dot dcd-green"></span>
+              <span class="dcard-rank">NOVICE</span>
+            </div>
+            <div class="dcard-name">EASY</div>
+            <div class="dcard-desc">Random moves — perfect for casual play and learning</div>
+            <div class="dcard-bar"><div class="dcard-fill" style="width:20%;background:var(--primary)"></div></div>
+          </button>
+          <button class="dcard dcard-medium" id="btn-diff-medium">
+            <div class="dcard-header">
+              <span class="dcard-dot dcd-gold"></span>
+              <span class="dcard-rank">TACTICIAN</span>
+            </div>
+            <div class="dcard-name">MEDIUM</div>
+            <div class="dcard-desc">Blocks and attacks — a real strategic challenge</div>
+            <div class="dcard-bar"><div class="dcard-fill" style="width:62%;background:var(--gold)"></div></div>
+          </button>
+          <button class="dcard dcard-hard" id="btn-diff-hard">
+            <div class="dcard-header">
+              <span class="dcard-dot dcd-red"></span>
+              <span class="dcard-rank">SOVEREIGN</span>
+            </div>
+            <div class="dcard-name">HARD</div>
+            <div class="dcard-desc">Perfect Minimax AI with alpha-beta pruning — nearly unbeatable</div>
+            <div class="dcard-bar"><div class="dcard-fill" style="width:100%;background:#f87171"></div></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN: ONLINE LOBBY ── -->
+    <div class="screen" id="screen-online-lobby">
+      <div class="gscreen-wrap gscreen-wrap-wide">
+        <div class="gscreen-head">
+          <div class="gscreen-chip">ONLINE PROTOCOL</div>
+          <h2 class="gscreen-title">Friend <span class="grad-text">Arena</span></h2>
+        </div>
+        <div class="firebase-warning" id="firebase-warning" role="alert" style="display:none">
+          <span class="fw-icon" aria-hidden="true">🔒</span>
+          <div class="fw-body">
+            <strong>Online mode requires Firebase setup.</strong><br/>
+            Local PvP and AI modes are still available and work 100% offline.
+            <div class="fw-actions">
+              <button class="fw-btn" id="fw-goto-local">⚡ Play Local PvP</button>
+              <button class="fw-btn fw-btn-ai" id="fw-goto-ai">🤖 Play vs AI</button>
+            </div>
+            <p class="fw-hint">To enable Online mode, open <code>firebase-config.js</code> and follow the step-by-step instructions in the comments.</p>
+          </div>
+        </div>
+        <div class="lobby-container" id="lobby-panel">
+          <div class="lobby-half">
+            <div class="lh-chip">CREATE ROOM</div>
+            <p class="lh-desc">Generate a private battle arena. Share the code with your friend.</p>
+            <button class="btn-primary" id="btn-create-room">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              Create Room
+            </button>
+            <div class="code-reveal" id="created-code-display" style="display:none">
+              <div class="cr-label">YOUR ROOM CODE</div>
+              <div class="cr-row">
+                <div class="cr-code" id="created-code-value">——</div>
+                <button class="cr-copy" id="btn-copy-code" title="Copy code">📋</button>
+              </div>
+              <div class="invite-link-row" id="invite-link-row" style="display:none">
+                <div class="il-label">INVITE LINK</div>
+                <div class="il-row">
+                  <input type="text" id="invite-link-value" class="game-input il-input" readonly aria-label="Invite link" />
+                  <button class="cr-copy" id="btn-copy-invite-link" title="Copy invite link">🔗</button>
+                  <button class="cr-copy" id="btn-share-invite" title="Share invite">📤</button>
+                </div>
+              </div>
+              <p class="cr-wait" id="cr-wait-msg">⏳ Waiting for your friend to join…</p>
+            </div>
+          </div>
+          <div class="lobby-divider-v"><span>OR</span></div>
+          <div class="lobby-half">
+            <div class="lh-chip">JOIN ROOM</div>
+            <p class="lh-desc">Enter the 6-character code your friend shared to enter their arena.</p>
+            <div class="lobby-input-row">
+              <input type="text" id="join-code-input" class="game-input" placeholder="ABC123" maxlength="6" autocomplete="off" spellcheck="false" aria-label="Room code" />
+              <button class="btn-primary" id="btn-join-room">JOIN ROOM &rarr;</button>
+            </div>
+            <p class="join-error" id="join-error" style="display:none">Room not found. Double-check the code and try again.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN: FRIENDS ── -->
+    <div class="screen" id="screen-friends">
+      <div class="gscreen-wrap gscreen-wrap-wide">
+        <div class="gscreen-head">
+          <div class="gscreen-chip">SQUAD PROTOCOL</div>
+          <h2 class="gscreen-title">Friend <span class="grad-text">Network</span></h2>
+        </div>
+        <!-- Friend Screen Tabs -->
+        <div class="friend-tabs" role="tablist">
+          <button class="ftab ftab-active" id="ftab-friends" data-panel="fpanel-friends" role="tab" aria-selected="true">FRIENDS</button>
+          <button class="ftab" id="ftab-requests" data-panel="fpanel-requests" role="tab" aria-selected="false">
+            REQUESTS
+            <span class="ftab-badge" id="ftab-req-badge" style="display:none">0</span>
+          </button>
+          <button class="ftab" id="ftab-search" data-panel="fpanel-search" role="tab" aria-selected="false">SEARCH</button>
+        </div>
+        <!-- Panel: Friends List -->
+        <div class="fpanel" id="fpanel-friends" role="tabpanel">
+          <div class="friends-list" id="friends-list">
+            <div class="empty-state">👥 No friends yet.<br>Use the Search tab to find players by Friend Code.</div>
+          </div>
+        </div>
+        <!-- Panel: Friend Requests -->
+        <div class="fpanel" id="fpanel-requests" role="tabpanel" style="display:none">
+          <div class="freq-section">
+            <div class="fap-label">INCOMING REQUESTS</div>
+            <div class="friends-list" id="incoming-requests-list">
+              <div class="empty-state">✅ No incoming requests.</div>
+            </div>
+          </div>
+          <div class="freq-section" style="margin-top:24px">
+            <div class="fap-label">SENT REQUESTS</div>
+            <div class="friends-list" id="outgoing-requests-list">
+              <div class="empty-state">No sent requests.</div>
+            </div>
+          </div>
+        </div>
+        <!-- Panel: Search Players -->
+        <div class="fpanel" id="fpanel-search" role="tabpanel" style="display:none">
+          <div class="friends-add-panel">
+            <div class="fap-label">SEARCH BY USERNAME OR FRIEND CODE</div>
+            <div class="fap-row">
+              <input type="text" id="search-player-input" class="game-input" placeholder="@username or TTT-XXXXXXXX" maxlength="32" autocomplete="off" spellcheck="false" aria-label="Search by username or Friend Code" />
+              <button class="btn-primary" id="btn-search-player">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                SEARCH
+              </button>
+            </div>
+            <div class="fap-my-identity" id="fap-my-identity" style="display:none"></div>
+          </div>
+          <div class="friends-list" id="search-results-list">
+            <div class="empty-state">Search for players by username or Friend Code.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SCREEN: MATCH HISTORY ── -->
+    <div class="screen" id="screen-history">
+      <div class="gscreen-wrap">
+        <div class="gscreen-head">
+          <div class="gscreen-chip">COMBAT LOG</div>
+          <h2 class="gscreen-title">Match <span class="grad-text">History</span></h2>
+        </div>
+        <div class="hist-list" id="history-list"></div>
+        <button class="btn-danger" id="btn-clear-history">🗑️&nbsp; Clear All History</button>
+      </div>
+    </div>
+
+    <!-- ── SCREEN: LEADERBOARD ── -->
+    <div class="screen" id="screen-leaderboard">
+      <div class="gscreen-wrap">
+        <div class="gscreen-head">
+          <div class="gscreen-chip">GLOBAL RANKS</div>
+          <h2 class="gscreen-title">Leader<span class="grad-text">board</span></h2>
+        </div>
+        <div class="lb-wrap">
+          <table class="lb-table" id="leaderboard-table" aria-label="Leaderboard">
+            <thead>
+              <tr>
+                <th>RANK</th>
+                <th>OPERATOR</th>
+                <th>W</th>
+                <th>L</th>
+                <th>D%</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body"></tbody>
+          </table>
+        </div>
+        <button class="btn-danger" id="btn-clear-leaderboard">🗑️&nbsp; Reset Leaderboard</button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         SCREEN: GAME BOARD — Main Arena
+    ══════════════════════════════════════════════ -->
+    <div class="screen" id="screen-game">
+
+      <!-- Status bar -->
+      <div class="gsb">
+        <div class="gsb-live">
+          <span class="gsb-dot"></span>SYSTEM STATUS: LIVE
+        </div>
+        <div class="gsb-msg" id="status-message">
+          <span class="turn-indicator">
+            <span class="turn-sym x-sym" id="turn-symbol">X</span>
+            <span id="turn-text">&apos;s Turn</span>
+          </span>
+        </div>
+        <div class="gsb-right">
+          <span class="mode-badge badge-local" id="mode-badge">LOCAL</span>
+          <span class="room-code-pill" id="room-code-pill" style="display:none"></span>
+        </div>
+      </div>
+
+      <!-- Player header -->
+      <div class="game-header">
+
+        <!-- Player X -->
+        <div class="player-card px-card" id="score-x-card">
+          <div class="pc-top">
+            <div class="pc-avatar pca-x">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></svg>
+            </div>
+            <div class="pc-info">
+              <div class="pc-rank">OPERATOR 01</div>
+              <div class="pc-name" id="label-x">PLAYER X</div>
+              <div class="match-friend-wrap" id="match-friend-wrap-x" style="display:none"></div>
+            </div>
+          </div>
+          <div class="pc-score-wrap">
+            <span class="pc-score pc-sx" id="score-x">0</span>
+          </div>
+          <div class="pc-bar pc-bar-x"></div>
+        </div>
+
+        <!-- Match center -->
+        <div class="match-mid">
+          <div class="mm-live">
+            <span class="mm-dot"></span>SYSTEM STATUS: LIVE
+          </div>
+          <div class="mm-round" id="mc-round">ROUND 1 / 3</div>
+          <div class="mm-vs">VERSUS</div>
+          <div class="mm-draws">
+            <div class="mm-draw-label">REVIVAL CHANCES</div>
+            <div class="mm-pips" id="draw-pips">
+              <span class="mpip mheart active" id="pip-1">❤️</span>
+              <span class="mpip mheart active" id="pip-2">❤️</span>
+              <span class="mpip mheart active" id="pip-3">❤️</span>
+            </div>
+            <div class="mm-draw-count" id="draw-count">Revival Chances: 3/3</div>
+          </div>
+          <div class="mm-btns">
+            <button class="mm-btn" id="btn-new-round">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6. 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              RESTART MATCH
+            </button>
+            <button class="mm-btn mm-btn-alt" id="btn-reset">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+              CHANGE MODE
+            </button>
+          </div>
+        </div>
+
+        <!-- Player O -->
+        <div class="player-card po-card" id="score-o-card">
+          <div class="pc-top pc-top-right">
+            <div class="pc-info pc-info-right">
+              <div class="pc-rank">CORE ENTITY</div>
+              <div class="pc-name" id="label-o">PLAYER O</div>
+              <div class="match-friend-wrap" id="match-friend-wrap-o" style="display:none"></div>
+            </div>
+            <div class="pc-avatar pca-o">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+          </div>
+          <div class="pc-score-wrap pc-score-right">
+            <span class="pc-score pc-so" id="score-o">0</span>
+          </div>
+          <div class="pc-bar pc-bar-o"></div>
+        </div>
+
+      </div><!-- /.game-header -->
+
+      <!-- Board -->
+      <div class="board-area">
+
+        <div class="board" id="board">
+          <div class="cell" id="cell-0" data-index="0" role="button" aria-label="Cell 1" tabindex="0"></div>
+          <div class="cell" id="cell-1" data-index="1" role="button" aria-label="Cell 2" tabindex="0"></div>
+          <div class="cell" id="cell-2" data-index="2" role="button" aria-label="Cell 3" tabindex="0"></div>
+          <div class="cell" id="cell-3" data-index="3" role="button" aria-label="Cell 4" tabindex="0"></div>
+          <div class="cell" id="cell-4" data-index="4" role="button" aria-label="Cell 5" tabindex="0"></div>
+          <div class="cell" id="cell-5" data-index="5" role="button" aria-label="Cell 6" tabindex="0"></div>
+          <div class="cell" id="cell-6" data-index="6" role="button" aria-label="Cell 7" tabindex="0"></div>
+          <div class="cell" id="cell-7" data-index="7" role="button" aria-label="Cell 8" tabindex="0"></div>
+          <div class="cell" id="cell-8" data-index="8" role="button" aria-label="Cell 9" tabindex="0"></div>
+        </div>
+        <svg class="win-line-svg" id="win-line-svg" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <line id="win-line" x1="0" y1="0" x2="0" y2="0"/>
+        </svg>
+      </div>
+
+      <!-- System Log -->
+      <div class="syslog">
+        <div class="syslog-header">
+          <span class="syslog-title">SYSTEM_LOG_v4.2</span>
+          <span class="syslog-live">● DATA RECV</span>
+        </div>
+        <div class="syslog-body" id="log-entries">
+          <div class="log-line log-active">&gt; SYSTEM INITIALIZED. AWAITING OPERATOR INPUT.</div>
+        </div>
+      </div>
+
+      <!-- Outcome Modal -->
+      <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-card">
+          <div class="modal-icon" id="modal-icon">🎉</div>
+          <h2 class="modal-title" id="modal-title">PLAYER X WINS!</h2>
+          <p class="modal-sub" id="modal-subtitle">Mission accomplished.</p>
+          <div class="modal-acts">
+            <button class="btn-primary" id="modal-new-round">NEXT ROUND</button>
+            <button class="btn-ghost" id="modal-reset">CHANGE MODE</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#screen-game -->
+  </div><!-- /#app -->
+
+  <!-- ── Profile Setup Modal (First Visit) ── -->
+  <div id="profile-setup-modal" role="dialog" aria-modal="true" aria-labelledby="psetup-title">
+    <div class="psetup-card">
+      <div class="psetup-chip">FIRST TIME SETUP</div>
+      <h2 id="psetup-title" class="psetup-title">Create Your <span class="grad-text">Profile</span></h2>
+      <p class="psetup-desc">Choose your username. Your unique Friend Code lets friends find and invite you to matches.</p>
+      <div class="psetup-section">
+        <div class="psetup-label">CHOOSE AVATAR</div>
+        <div class="emoji-picker" id="emoji-picker" role="group" aria-label="Avatar selection">
+          <button class="emoji-opt" data-emoji="⚡" aria-label="Lightning">⚡</button>
+          <button class="emoji-opt" data-emoji="🔥" aria-label="Fire">🔥</button>
+          <button class="emoji-opt" data-emoji="💎" aria-label="Diamond">💎</button>
+          <button class="emoji-opt" data-emoji="🌊" aria-label="Wave">🌊</button>
+          <button class="emoji-opt" data-emoji="👾" aria-label="Alien">👾</button>
+          <button class="emoji-opt" data-emoji="🎯" aria-label="Target">🎯</button>
+          <button class="emoji-opt" data-emoji="🚀" aria-label="Rocket">🚀</button>
+          <button class="emoji-opt" data-emoji="⭐" aria-label="Star">⭐</button>
+        </div>
+      </div>
+      <div class="psetup-section">
+        <div class="psetup-label">OPERATOR USERNAME</div>
+        <input type="text" id="profile-name-input" class="game-input psetup-input" placeholder="Choose a username…" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Player username" />
+      </div>
+      <button class="btn-primary psetup-btn" id="btn-profile-confirm">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        ENTER ARENA
+      </button>
+      <p class="psetup-note">Your username and Friend Code appear on your profile. Share either one so friends can add you.</p>
+    </div>
+  </div>
+
+  <!-- ── In-App Toast Notifications ── -->
+  <div id="toast-container" role="status" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ── Incoming Invite Popup ── -->
+  <div id="invite-popup" role="dialog" aria-modal="true" aria-label="Incoming match invite"></div>
+
+  <!-- ══ Auth Modal ══ -->
+  <div id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <span class="auth-brand-ttt">TTT</span><span class="auth-brand-arena">ARENA</span>
+      </div>
+      <div class="auth-chip">SECURE ACCESS PORTAL</div>
+      <h2 id="auth-title" class="auth-title">Join the <span class="grad-text">Arena</span></h2>
+      <p class="auth-desc">Sign in to unlock online play, friend invites, and real-time matchmaking.</p>
+      <div class="auth-firebase-warn" id="auth-firebase-warn" style="display:none">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>Firebase not configured.<br><small>Open firebase-config.js and follow the setup instructions.</small></div>
+      </div>
+      <div class="auth-btns" id="auth-btns">
+        <button class="auth-google-btn" id="btn-login-google">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+        <div class="auth-divider"><span>OR</span></div>
+        <button class="auth-guest-btn" id="btn-login-guest">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Play as Guest
+        </button>
+      </div>
+      <p class="auth-note">Guest accounts are anonymous. Login with Google to save friends, stats, and match history permanently.</p>
+      <button class="auth-skip" id="btn-auth-skip">Continue without login</button>
+    </div>
+  </div>
+
+  <!-- ══ Notification Center ══ -->
+  <div id="notif-center" role="dialog" aria-label="Notification center">
+    <div class="notif-header">
+      <div class="notif-hd-title">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        NOTIFICATIONS
+      </div>
+      <div class="notif-hd-actions">
+        <button class="notif-mark-all" id="btn-mark-all-read" title="Mark all as read">✓ All read</button>
+        <button class="notif-close-btn" id="btn-notif-close" aria-label="Close">✕</button>
+      </div>
+    </div>
+    <div class="notif-list" id="notif-list">
+      <div class="empty-state" style="padding:28px 0">🔔 No notifications yet.</div>
+    </div>
+  </div>
+
+  <!-- ══ Profile Edit Modal ══ -->
+  <div id="profile-edit-modal" role="dialog" aria-modal="true" aria-labelledby="pedit-title">
+    <div class="pedit-card">
+      <div class="pedit-header">
+        <h2 id="pedit-title" class="pedit-title">Edit <span class="grad-text">Profile</span></h2>
+        <button class="pedit-close" id="btn-pedit-close" aria-label="Close">✕</button>
+      </div>
+      <div class="psetup-section">
+        <div class="psetup-label">AVATAR</div>
+        <div class="emoji-picker" id="pedit-emoji-picker" role="group" aria-label="Avatar selection">
+          <button class="emoji-opt" data-emoji="⚡">⚡</button>
+          <button class="emoji-opt" data-emoji="🔥">🔥</button>
+          <button class="emoji-opt" data-emoji="💎">💎</button>
+          <button class="emoji-opt" data-emoji="🌊">🌊</button>
+          <button class="emoji-opt" data-emoji="👾">👾</button>
+          <button class="emoji-opt" data-emoji="🎯">🎯</button>
+          <button class="emoji-opt" data-emoji="🚀">🚀</button>
+          <button class="emoji-opt" data-emoji="⭐">⭐</button>
+        </div>
+      </div>
+      <div class="psetup-section">
+        <div class="psetup-label">USERNAME</div>
+        <input type="text" id="pedit-name" class="game-input psetup-input" placeholder="Your operator name…" maxlength="16" autocomplete="off" spellcheck="false" />
+      </div>
+      <div class="psetup-section">
+        <div class="psetup-label">STATUS MESSAGE</div>
+        <input type="text" id="pedit-status" class="game-input psetup-input" placeholder="e.g. GG no re" maxlength="40" autocomplete="off" />
+      </div>
+      <div class="pstat-grid">
+        <div class="pstat-card"><div class="pstat-val" id="pstat-matches">0</div><div class="pstat-lbl">MATCHES</div></div>
+        <div class="pstat-card"><div class="pstat-val pstat-green" id="pstat-wins">0</div><div class="pstat-lbl">WINS</div></div>
+        <div class="pstat-card"><div class="pstat-val pstat-red" id="pstat-losses">0</div><div class="pstat-lbl">LOSSES</div></div>
+        <div class="pstat-card"><div class="pstat-val" id="pstat-draws">0</div><div class="pstat-lbl">DRAWS</div></div>
+        <div class="pstat-card"><div class="pstat-val pstat-gold" id="pstat-winpct">0%</div><div class="pstat-lbl">WIN RATE</div></div>
+      </div>
+      <button class="btn-primary psetup-btn" id="btn-save-profile">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        SAVE CHANGES
+      </button>
+    </div>
+  </div>
+
+  <script src="firebase-config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
